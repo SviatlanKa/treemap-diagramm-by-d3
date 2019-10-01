@@ -25,3 +25,15 @@ body {
 #description {
     margin-bottom: 1vw;
 }
+
+#tooltip {
+    position: absolute;
+    text-align: center;
+    width: fit-content;
+    height: fit-content;
+    padding: .5vw;
+    font-size: .9em;
+    font-weight: bold;
+    background-color: white;
+    box-shadow: 1px 1px 8px 5px rgba(0,0,0,0.72);
+}
