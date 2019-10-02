@@ -11,10 +11,10 @@ module.exports = {
     contentBase: './dist'
   },
   plugins: [
-      new CleanWebpackPlugin(),
+    new CleanWebpackPlugin(),
     new HtmlWebpackPlugin({
-        template: "./src/index.html"
-      })
+      title: "Treemap Diagram"
+    })
   ],
   resolve: {
     extensions: ['*', '.js']
