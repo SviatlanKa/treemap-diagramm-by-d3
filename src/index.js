@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import * as d3 from 'd3';
 import './style.css';
 
@@ -55,14 +56,23 @@ const tooltip = main.append("div")
     .attr("id", "tooltip")
     .style("opacity", 0);
 
+const valueParse = (data) => {
+    let array = _.cloneDeep(data);
+    array.children.forEach(elem => {
+        elem.children.forEach(item => item.value = parseInt(item.value))
+    });
+    return array;
+}
+
+
 d3.json(urls[0]).then(kickRsp => {
-    dataset[0].data = kickRsp;
+    dataset[0].data = valueParse(kickRsp);
 
     d3.json(urls[1]).then(movieRsp => {
-        dataset[1].data = movieRsp;
+        dataset[1].data = valueParse(movieRsp);
 
         d3.json(urls[2]).then(videoRsp => {
-            dataset[2].data = videoRsp;
+            dataset[2].data = valueParse(videoRsp);
 
             let data = dataset[0].data;
             const width = 1200;
@@ -84,63 +94,43 @@ d3.json(urls[0]).then(kickRsp => {
 
             const svg = d3.select("#main")
                 .append("svg")
-                .attr("viewBox", [0, 0, width, height])
+                .attr("width", width)
+                .attr("height", height)
 
             let root = d3.hierarchy(data)
-                .sum(d => d.values)
-                .sort((a, b) => b.height - a.height || b.value - a.value);
-console.log(root.leaves())
-            const colorScale = d3.scaleOrdinal()
-                .domain([1, root.children.length])
-                .range(myColor);
+                .sum(d => d.value)
+                .sort((a, b) => b.value - a.value);
 
-            let treemap = d3.treemap();
+            const colorScale = d3.scaleOrdinal(myColor);
 
-            let nodes = treemap
-                .tile(d3.treemapSquarify)
-                .size([width, height])
+            let treemap = d3.treemap()
+                .size([width, height - 10])
                 .padding(1)
                 .round(true)
                 (root);
 
-            // svg.selectAll("rect")
-            //     .data(root.leaves())
-            //     .enter()
-            //     .append("rect")
-            //     .attr("x", d => d.x0)
-            //     .attr("y", d => d.y0)
-            //     .attr("width", d => d.x1 - d.x0)
-            //     .attr("height", d=> d.y1 - d.y0)
-            //     .attr("stroke", 1 + "px")
-            //     // .style("fill", d=> colorScale(d.parent.data.name))
-            // console.log(nodes)
-            const node = svg.datum(root).selectAll(".node")
-                .data(root.leaves())
-                .enter().append("rect")
-                .attr("class", "node")
-                .style("left", (d) => d.x0 + "px")
-                .style("top", (d) => d.y0 + "px")
-                .style("width", (d) => Math.max(0, d.x1 - d.x0 - 1) + "px")
-                .style("height", (d) => Math.max(0, d.y1 - d.y0  - 1) + "px")
-                .style("background", (d) => colorScale(d.parent.data.name))
-                .text((d) => d.data.name);
+            console.log(treemap.leaves())
 
-            d3.selectAll("input").on("change", function change() {
-                const value = this.value === "count"
-                    ? (d) => { return d.size ? 1 : 0;}
-                    : (d) => { return d.size; };
+            svg.selectAll("rect")
+                .data(treemap.leaves())
+                .enter()
+                .append("rect")
+                .attr("x", d => d.x0)
+                .attr("y", d => d.y0)
+                .attr("width", d => d.x1 - d.x0)
+                .attr("height", d=> d.y1 - d.y0)
+                .style("fill", d=> colorScale(d.parent.data.name));
+            svg.selectAll("text")
+                .data(treemap.leaves())
+                .enter()
+                .append("text")
+                .attr("x", d => d.x0)
+                .attr("y", d => d.y0 + 20)
+                .attr("font-size", 10)
+                .attr("fill", "black")
+                .attr("text-anchor", "middle")
+                .text(d => d.data.name)
 
-                const newRoot = d3.hierarchy(data, (d) => d.children)
-                    .sum(value);
-
-                node.data(treemap(newRoot).leaves())
-                    .transition()
-                    .duration(1500)
-                    .style("left", (d) => d.x0 + "px")
-                    .style("top", (d) => d.y0 + "px")
-                    .style("width", (d) => Math.max(0, d.x1 - d.x0 - 1) + "px")
-                    .style("height", (d) => Math.max(0, d.y1 - d.y0  - 1) + "px")
-            });
         })
 
     })
