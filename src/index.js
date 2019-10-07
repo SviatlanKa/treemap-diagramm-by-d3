@@ -24,7 +24,7 @@ const dataset = [
     {
         nameDataset: "Video Game Dataset",
         title: "Video Game Pledges",
-        description: "op 100 Most Sold Video Games Grouped by Platform",
+        description: "Top 100 Most Sold Video Games Grouped by Platform",
         data: []
     }
 ];
@@ -115,22 +115,37 @@ d3.json(urls[0]).then(kickRsp => {
                 .data(treemap.leaves())
                 .enter()
                 .append("rect")
+                .attr("class", "tile")
+                .attr("data-name", d => d.data.name)
+                .attr("data-category", d => d.data.category)
+                .attr("data-value", d => d.data.value)
                 .attr("x", d => d.x0)
                 .attr("y", d => d.y0)
                 .attr("width", d => d.x1 - d.x0)
                 .attr("height", d=> d.y1 - d.y0)
                 .style("fill", d=> colorScale(d.parent.data.name));
-            svg.selectAll("text")
+     let text = svg.selectAll("text")
                 .data(treemap.leaves())
                 .enter()
                 .append("text")
-                .attr("x", d => d.x0)
-                .attr("y", d => d.y0 + 20)
-                .attr("font-size", 10)
-                .attr("fill", "black")
-                .attr("text-anchor", "middle")
-                .text(d => d.data.name)
-
+                .attr("class", "tile-text")
+                .attr("x", d => d.x0 + 1)
+                .attr("y", d => d.y0 + 1)
+                .attr("font-size", 10);
+     text.selectAll("tspan")
+         .data(d => {
+             let arr = [];
+             const x = d3.select()
+             const stringArr = d.data.name.split(' ');
+             stringArr.forEach(item => arr.push([item, d.x0 + 1]));
+             return arr;
+         })
+         .enter()
+         .append("tspan")
+         .attr("dy", 10)
+         .attr("x", d => d[1])
+         .text(d => d[0])
+         .each(wrap);
         })
 
     })
