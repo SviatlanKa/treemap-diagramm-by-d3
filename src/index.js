@@ -146,9 +146,10 @@ d3.json(urls[0]).then(kickRsp => {
             const findLegendSize = () => {
                 const minHeight = 30;
                 const columnNum = Math.floor(heightLegend / 30);
-                const rowNum = Math.round(treemap.data.children.length / columnNum);//change this
+                const rowNum = Math.ceil(treemap.data.children.length / columnNum);
+                const textLength = Math.max(treemap.data.children.map(item => item.length));
             }
-            console.log(Math.round(19/6))
+            console.log(treemap.data.children.map(item => item.data.name.length))//something wrong
 
             const legend = svg.append("g")
                 .attr("id", "legend")
