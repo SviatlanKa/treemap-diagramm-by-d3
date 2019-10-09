@@ -76,7 +76,8 @@ d3.json(urls[0]).then(kickRsp => {
 
             let data = dataset[0].data;
             const width = 1200;
-            const height = width / 1.5;
+            const height = width / 1.2;
+            const heightLegend = height / 5;
 
             main.select(".button-group")
                 .selectAll("button")
@@ -94,8 +95,8 @@ d3.json(urls[0]).then(kickRsp => {
 
             const svg = d3.select("#main")
                 .append("svg")
-                .attr("width", width)
-                .attr("height", height)
+                .attr("viewBox", `0 0 ${width} ${height}`);
+
 
             let root = d3.hierarchy(data)
                 .sum(d => d.value)
@@ -104,48 +105,62 @@ d3.json(urls[0]).then(kickRsp => {
             const colorScale = d3.scaleOrdinal(myColor);
 
             let treemap = d3.treemap()
-                .size([width, height - 10])
+                .size([width, height - heightLegend])
                 .padding(1)
                 .round(true)
                 (root);
 
-            console.log(treemap.leaves())
+            console.log(treemap.data.children)
 
-            svg.selectAll("rect")
+            const tile = svg.selectAll("g")
                 .data(treemap.leaves())
                 .enter()
-                .append("rect")
+                .append("g")
+                .attr("transform", d => `translate(${d.x0}, ${d.y0})`);
+
+            tile.append("rect")
                 .attr("class", "tile")
                 .attr("data-name", d => d.data.name)
                 .attr("data-category", d => d.data.category)
                 .attr("data-value", d => d.data.value)
-                .attr("x", d => d.x0)
-                .attr("y", d => d.y0)
                 .attr("width", d => d.x1 - d.x0)
                 .attr("height", d=> d.y1 - d.y0)
                 .style("fill", d=> colorScale(d.parent.data.name));
-     let text = svg.selectAll("text")
-                .data(treemap.leaves())
-                .enter()
-                .append("text")
+
+            let text = tile.append("text")
                 .attr("class", "tile-text")
                 .attr("x", d => d.x0 + 1)
                 .attr("y", d => d.y0 + 1)
                 .attr("font-size", 10);
-     text.selectAll("tspan")
-         .data(d => {
-             let arr = [];
-             const x = d3.select()
-             const stringArr = d.data.name.split(' ');
-             stringArr.forEach(item => arr.push([item, d.x0 + 1]));
-             return arr;
-         })
-         .enter()
-         .append("tspan")
-         .attr("dy", 10)
-         .attr("x", d => d[1])
-         .text(d => d[0])
-         .each(wrap);
+
+            text.selectAll("tspan")
+                .data(d => d.data.name.split(/(:|,|-)/)[0].split(' '))
+                .enter()
+                .append("tspan")
+                .attr("x", 4)
+                .attr("y", (d,i) => i * 10)
+                .attr("dy", 10)
+                .text(d => d);
+
+            const translateY = Math.abs(height - heightLegend + 10);
+            const findLegendSize = () => {
+                const minHeight = 30;
+                const columnNum = Math.floor(heightLegend / 30);
+                const rowNum = Math.round(treemap.data.children.length / columnNum);//change this
+            }
+            console.log(Math.round(19/6))
+
+            const legend = svg.append("g")
+                .attr("id", "legend")
+                .attr("transform", `translate(0,${translateY})`);
+
+            const legendItem = legend.selectAll("g")
+                .data(treemap.data.children)
+                .enter()
+                .append("g")
+                .attr("transform", (d,i) => {
+
+                })
         })
 
     })
