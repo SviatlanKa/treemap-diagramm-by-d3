@@ -140,28 +140,52 @@ d3.json(urls[0]).then(kickRsp => {
                 .attr("x", 4)
                 .attr("y", (d,i) => i * 10)
                 .attr("dy", 10)
-                .text(d => d);
+                // .text(d => {
+                //     console.log(d3.select(this).attr("y"));
+                //     console.log(this.node())
+                //     return d3.select(this).attr("y") > this.node().getBBox().height ? '' : d}) //this doesn't work with narrow func
 
-            const translateY = Math.abs(height - heightLegend + 10);
+            const translateY = Math.abs(height - heightLegend + 20);
             const findLegendSize = () => {
                 const minHeight = 30;
-                const columnNum = Math.floor(heightLegend / 30);
-                const rowNum = Math.ceil(treemap.data.children.length / columnNum);
-                const textLength = Math.max(treemap.data.children.map(item => item.length));
+                const columns = Math.floor(heightLegend / minHeight);
+                const rows = Math.ceil(treemap.data.children.length / columns);
+                const textLength = Math.max(...treemap.data.children.map(item => item.name.length));
             }
-            console.log(treemap.data.children.map(item => item.data.name.length))//something wrong
+            const getTextWidth = (text, font) => {
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext("2d");
+                context.font = font;
+                const width = Math.ceil(context.measureText(text).width);
+                return width;
+            };
 
             const legend = svg.append("g")
                 .attr("id", "legend")
-                .attr("transform", `translate(0,${translateY})`);
+                .attr("transform", `translate(0,${translateY})`)
+                legend.append('rect')
+                .attr("x", 0)
+                .attr("y", 0)
+                .attr("height", 20)
+                .attr("width", 20)
+                .attr("fill", "green")
+                    legend.append("text")
+                        .attr("x", 30)
+                        .attr("y", 15)
+                        .text("text")
+                        .style("font-size", 20)
+                legend.append("rect")
+                .attr("x", 20 + 10 + 4*10 + 10)
+                .attr("y", 0)
+                .attr("height", 20)
+                .attr("width", 20)
+                .attr("fill", "blue");
 
             const legendItem = legend.selectAll("g")
                 .data(treemap.data.children)
                 .enter()
                 .append("g")
-                .attr("transform", (d,i) => {
 
-                })
         })
 
     })
