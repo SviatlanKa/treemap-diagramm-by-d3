@@ -75,9 +75,6 @@ d3.json(urls[0]).then(kickRsp => {
             dataset[2].data = valueParse(videoRsp);
 
             let data = dataset[0].data;
-            const width = 1200;
-            const height = width / 1.2;
-            const heightLegend = height / 5;
 
             main.select(".button-group")
                 .selectAll("button")
@@ -93,27 +90,77 @@ d3.json(urls[0]).then(kickRsp => {
                         .text(d.description);
                 });
 
-            const svg = d3.select("#main")
-                .append("svg")
-                .attr("viewBox", `0 0 ${width} ${height}`);
-
-
             let root = d3.hierarchy(data)
                 .sum(d => d.value)
                 .sort((a, b) => b.value - a.value);
 
             const colorScale = d3.scaleOrdinal(myColor);
 
+            const width = 1200;
+            const heightTreeMap = width / 1.2;
+            const margin = {
+                top: 10,
+                right: 15,
+                bottom: 10,
+                left: 10
+            };
+            const font = "20px Roboto, sans serif";
+
+            const longestText = (array) => { //find longest text for creating legend
+                let longest = '';
+                let maxLength = 0;
+                array.forEach(item => {
+                    if (item.name.length > maxLength) {
+                        maxLength = item.name.length;
+                        longest = item.name;
+                    }
+                });
+                return longest;
+            };
+            const getTextWidth = (text, font) => { //for creating legend
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext("2d");
+                context.font = font;
+                const widthText = Math.ceil(context.measureText(text).width);
+                return widthText;
+            };
+
             let treemap = d3.treemap()
-                .size([width, height - heightLegend])
-                .padding(1)
+                .size([width, heightTreeMap])
+                .paddingInner(1)
                 .round(true)
                 (root);
 
-            console.log(treemap.data.children)
+            const children = treemap.data.children;
+            const leaves = treemap.leaves();
+
+            const rows = Math.round(width / 1.5 / (20 + margin.left + getTextWidth(longestText(children), font) + margin.right));
+            const columns = Math.ceil(children.length / rows);
+            const heightLegend = margin.top * 2 + columns * (20 + margin.bottom);
+            const height = heightTreeMap + heightLegend;
+
+            const itemsColumns = (array) => {
+                let itemsColArray = [];
+                for (let i = 0; i < rows; i++) {
+                    let column = [];
+                    for (let j = i; j < array.length;) {
+                       column.push(array[j]);
+                       j += rows;
+                    }
+                    itemsColArray.push(column);
+                }
+                console.log(itemsColArray);
+                return itemsColArray;
+            };
+
+            itemsColumns(children) //continue here
+
+            const svg = d3.select("#main")
+                .append("svg")
+                .attr("viewBox", `0 0 ${width} ${height}`);
 
             const tile = svg.selectAll("g")
-                .data(treemap.leaves())
+                .data(leaves)
                 .enter()
                 .append("g")
                 .attr("transform", d => `translate(${d.x0}, ${d.y0})`);
@@ -125,7 +172,7 @@ d3.json(urls[0]).then(kickRsp => {
                 .attr("data-value", d => d.data.value)
                 .attr("width", d => d.x1 - d.x0)
                 .attr("height", d=> d.y1 - d.y0)
-                .style("fill", d=> colorScale(d.parent.data.name));
+                .style("fill", d => colorScale(d.parent.data.name));
 
             let text = tile.append("text")
                 .attr("class", "tile-text")
@@ -134,35 +181,23 @@ d3.json(urls[0]).then(kickRsp => {
                 .attr("font-size", 10);
 
             text.selectAll("tspan")
-                .data(d => d.data.name.split(/(:|,|-)/)[0].split(' '))
+                .data(d => d.data.name.split(/(:|,|-)\s/)[0].split(' '))
                 .enter()
                 .append("tspan")
                 .attr("x", 4)
                 .attr("y", (d,i) => i * 10)
                 .attr("dy", 10)
-                // .text(d => {
-                //     console.log(d3.select(this).attr("y"));
-                //     console.log(this.node())
-                //     return d3.select(this).attr("y") > this.node().getBBox().height ? '' : d}) //this doesn't work with narrow func
+                .text(d => d);
 
-            const translateY = Math.abs(height - heightLegend + 20);
-            const findLegendSize = () => {
-                const minHeight = 30;
-                const columns = Math.floor(heightLegend / minHeight);
-                const rows = Math.ceil(treemap.data.children.length / columns);
-                const textLength = Math.max(...treemap.data.children.map(item => item.name.length));
-            }
-            const getTextWidth = (text, font) => {
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext("2d");
-                context.font = font;
-                const width = Math.ceil(context.measureText(text).width);
-                return width;
+            const translate = {
+                x: width * (1 - 2/3) / 2,
+                y: heightTreeMap + margin.top * 2
             };
 
             const legend = svg.append("g")
                 .attr("id", "legend")
-                .attr("transform", `translate(0,${translateY})`)
+                .attr("transform", `translate(${translate.x},${translate.y})`);
+
                 legend.append('rect')
                 .attr("x", 0)
                 .attr("y", 0)
@@ -170,7 +205,7 @@ d3.json(urls[0]).then(kickRsp => {
                 .attr("width", 20)
                 .attr("fill", "green")
                     legend.append("text")
-                        .attr("x", 30)
+                        .attr("x", 20 + margin.left)
                         .attr("y", 15)
                         .text("text")
                         .style("font-size", 20)
@@ -182,7 +217,7 @@ d3.json(urls[0]).then(kickRsp => {
                 .attr("fill", "blue");
 
             const legendItem = legend.selectAll("g")
-                .data(treemap.data.children)
+                .data(children)
                 .enter()
                 .append("g")
 
