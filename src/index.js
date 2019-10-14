@@ -139,21 +139,22 @@ d3.json(urls[0]).then(kickRsp => {
             const heightLegend = margin.top * 2 + columns * (20 + margin.bottom);
             const height = heightTreeMap + heightLegend;
 
-            const itemsColumns = (array) => {
-                let itemsColArray = [];
+            const widthLegendRows = (array) => {
+                let itemsColWidths = [];
                 for (let i = 0; i < rows; i++) {
                     let column = [];
                     for (let j = i; j < array.length;) {
                        column.push(array[j]);
                        j += rows;
                     }
-                    itemsColArray.push(column);
+                    let longestTextCol = longestText(column);
+                    itemsColWidths.push(getTextWidth(longestTextCol, font));
                 }
-                console.log(itemsColArray);
-                return itemsColArray;
+                console.log(itemsColWidths);
+                return itemsColWidths;
             };
 
-            itemsColumns(children) //continue here
+            widthLegendRows(children) //continue here
 
             const svg = d3.select("#main")
                 .append("svg")
@@ -197,6 +198,10 @@ d3.json(urls[0]).then(kickRsp => {
             const legend = svg.append("g")
                 .attr("id", "legend")
                 .attr("transform", `translate(${translate.x},${translate.y})`);
+            children.forEach(item => {
+                let i = 0;
+
+            })
 
                 legend.append('rect')
                 .attr("x", 0)
