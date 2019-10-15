@@ -49,8 +49,9 @@ main.append("span")
     .attr("id", "description")
     .text(dataset[0].description);
 
-main.append("g")
-    .attr("class", "button-group");
+main.append("div")
+    .attr("class", "button-group")
+    .style("margin-bottom", 1 + "vw");
 
 const tooltip = main.append("div")
     .attr("id", "tooltip")
@@ -62,7 +63,7 @@ const valueParse = (data) => {
         elem.children.forEach(item => item.value = parseInt(item.value))
     });
     return array;
-}
+};
 
 
 d3.json(urls[0]).then(kickRsp => {
@@ -75,6 +76,9 @@ d3.json(urls[0]).then(kickRsp => {
             dataset[2].data = valueParse(videoRsp);
 
             let data = dataset[0].data;
+            let root = d3.hierarchy(data)
+                .sum(d => d.value)
+                .sort((a, b) => b.value - a.value);
 
             main.select(".button-group")
                 .selectAll("button")
@@ -84,27 +88,27 @@ d3.json(urls[0]).then(kickRsp => {
                 .text(d => d.nameDataset)
                 .on("click", d => {
                     data = d.data;
+                    root = d3.hierarchy(data)
+                        .sum(d => d.value)
+                        .sort((a, b) => b.value - a.value);
                     main.select("#title")
                         .text(d.title);
                     main.select("#description")
                         .text(d.description);
                 });
 
-            let root = d3.hierarchy(data)
-                .sum(d => d.value)
-                .sort((a, b) => b.value - a.value);
-
             const colorScale = d3.scaleOrdinal(myColor);
 
             const width = 1200;
             const heightTreeMap = width / 1.2;
             const margin = {
-                top: 10,
+                top: 20,
                 right: 15,
                 bottom: 10,
                 left: 10
             };
-            const font = "20px Roboto, sans serif";
+            const sizeRectLegend = 20;
+            const font = "15px 'Roboto', sans-serif";
 
             const longestText = (array) => { //find longest text for creating legend
                 let longest = '';
@@ -131,30 +135,33 @@ d3.json(urls[0]).then(kickRsp => {
                 .round(true)
                 (root);
 
+            console.log(treemap)
+
             const children = treemap.data.children;
+            console.log(children)
             const leaves = treemap.leaves();
 
-            const rows = Math.round(width / 1.5 / (20 + margin.left + getTextWidth(longestText(children), font) + margin.right));
+            const rows = Math.round(width / 1.5 / (sizeRectLegend + margin.left + getTextWidth(longestText(children), font) + margin.right));
             const columns = Math.ceil(children.length / rows);
-            const heightLegend = margin.top * 2 + columns * (20 + margin.bottom);
+            const heightLegend = margin.top + columns * (sizeRectLegend + margin.bottom) + margin.bottom;
             const height = heightTreeMap + heightLegend;
 
-            const widthLegendRows = (array) => {
+            const findWidthLegendRows = () => {
                 let itemsColWidths = [];
                 for (let i = 0; i < rows; i++) {
                     let column = [];
-                    for (let j = i; j < array.length;) {
-                       column.push(array[j]);
+                    for (let j = i; j < children.length;) {
+                       column.push(children[j]);
                        j += rows;
                     }
                     let longestTextCol = longestText(column);
-                    itemsColWidths.push(getTextWidth(longestTextCol, font));
+                    itemsColWidths.push(sizeRectLegend + margin.left + getTextWidth(longestTextCol, font) + margin.right);
                 }
-                console.log(itemsColWidths);
                 return itemsColWidths;
             };
+            const widthLegendRows = findWidthLegendRows();
 
-            widthLegendRows(children) //continue here
+            const widthLegend = d3.sum(widthLegendRows);
 
             const svg = d3.select("#main")
                 .append("svg")
@@ -173,7 +180,23 @@ d3.json(urls[0]).then(kickRsp => {
                 .attr("data-value", d => d.data.value)
                 .attr("width", d => d.x1 - d.x0)
                 .attr("height", d=> d.y1 - d.y0)
-                .style("fill", d => colorScale(d.parent.data.name));
+                .style("fill", d => colorScale(d.parent.data.name))
+                .on("mousemove", d => {
+                    tooltip.transition()
+                        .duration(300)
+                        .style("opacity", .9)
+                    tooltip.html(`<span><b>Name:</b> ${d.data.name}</span><br>
+                                    <span><b>Category:</b> ${d.data.category}</span><br>
+                                    <span><b>Value:</b> ${d.data.value}</span>`)
+                        .style("left", d3.event.pageX + margin.left + "px")
+                        .style("top", d3.event.pageY + "px")
+                        .attr("data-value", d.data.value)
+                })
+                .on("mouseout", d => {
+                    tooltip.transition()
+                        .duration(200)
+                        .style("opacity", 0);
+                });
 
             let text = tile.append("text")
                 .attr("class", "tile-text")
@@ -190,41 +213,41 @@ d3.json(urls[0]).then(kickRsp => {
                 .attr("dy", 10)
                 .text(d => d);
 
-            const translate = {
-                x: width * (1 - 2/3) / 2,
-                y: heightTreeMap + margin.top * 2
+            let translate = {
+                x: (width - widthLegend) / 2,
+                y: heightTreeMap + margin.top
             };
 
             const legend = svg.append("g")
                 .attr("id", "legend")
                 .attr("transform", `translate(${translate.x},${translate.y})`);
-            children.forEach(item => {
-                let i = 0;
-
-            })
-
-                legend.append('rect')
-                .attr("x", 0)
-                .attr("y", 0)
-                .attr("height", 20)
-                .attr("width", 20)
-                .attr("fill", "green")
-                    legend.append("text")
-                        .attr("x", 20 + margin.left)
-                        .attr("y", 15)
-                        .text("text")
-                        .style("font-size", 20)
-                legend.append("rect")
-                .attr("x", 20 + 10 + 4*10 + 10)
-                .attr("y", 0)
-                .attr("height", 20)
-                .attr("width", 20)
-                .attr("fill", "blue");
 
             const legendItem = legend.selectAll("g")
                 .data(children)
                 .enter()
                 .append("g")
+                .attr("transform", (d,i) => {
+                    let idx = i;
+                    let currColumn = 0;
+                    while (idx >= rows) {
+                        idx -= rows;
+                        currColumn++;
+                    }
+                    translate.x = !(idx) ? idx : translate.x + widthLegendRows[idx - 1];
+                    translate.y = (sizeRectLegend + margin.bottom) * currColumn;
+                    return `translate(${translate.x}, ${translate.y})`;
+                });
+
+            legendItem.append("rect")
+                .attr("class", "legend-item")
+                .attr("width", sizeRectLegend)
+                .attr("height", sizeRectLegend)
+                .attr("fill", d => colorScale(d.name));
+            legendItem.append("text")
+                .attr("x", sizeRectLegend + margin.left)
+                .attr("y", (sizeRectLegend + margin.bottom) / 2)
+                .style("font", font)
+                .text(d => d.name);
 
         })
 
