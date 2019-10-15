@@ -87,10 +87,6 @@ d3.json(urls[0]).then(kickRsp => {
                 .append("button")
                 .text(d => d.nameDataset)
                 .on("click", d => {
-                    data = d.data;
-                    root = d3.hierarchy(data)
-                        .sum(d => d.value)
-                        .sort((a, b) => b.value - a.value);
                     main.select("#title")
                         .text(d.title);
                     main.select("#description")
@@ -125,8 +121,7 @@ d3.json(urls[0]).then(kickRsp => {
                 const canvas = document.createElement('canvas');
                 const context = canvas.getContext("2d");
                 context.font = font;
-                const widthText = Math.ceil(context.measureText(text).width);
-                return widthText;
+                return Math.ceil(context.measureText(text).width);
             };
 
             let treemap = d3.treemap()
@@ -135,13 +130,11 @@ d3.json(urls[0]).then(kickRsp => {
                 .round(true)
                 (root);
 
-            console.log(treemap)
-
             const children = treemap.data.children;
-            console.log(children)
             const leaves = treemap.leaves();
 
-            const rows = Math.round(width / 1.5 / (sizeRectLegend + margin.left + getTextWidth(longestText(children), font) + margin.right));
+            const rows = Math.round(width / 1.5 / (sizeRectLegend + margin.left
+                + getTextWidth(longestText(children), font) + margin.right));
             const columns = Math.ceil(children.length / rows);
             const heightLegend = margin.top + columns * (sizeRectLegend + margin.bottom) + margin.bottom;
             const height = heightTreeMap + heightLegend;
@@ -155,7 +148,8 @@ d3.json(urls[0]).then(kickRsp => {
                        j += rows;
                     }
                     let longestTextCol = longestText(column);
-                    itemsColWidths.push(sizeRectLegend + margin.left + getTextWidth(longestTextCol, font) + margin.right);
+                    itemsColWidths.push(sizeRectLegend + margin.left
+                        + getTextWidth(longestTextCol, font) + margin.right);
                 }
                 return itemsColWidths;
             };
@@ -185,9 +179,7 @@ d3.json(urls[0]).then(kickRsp => {
                     tooltip.transition()
                         .duration(300)
                         .style("opacity", .9)
-                    tooltip.html(`<span><b>Name:</b> ${d.data.name}</span><br>
-                                    <span><b>Category:</b> ${d.data.category}</span><br>
-                                    <span><b>Value:</b> ${d.data.value}</span>`)
+                    tooltip.html(`<span><b>Name:</b> ${d.data.name}</span><br><span><b>Category:</b> ${d.data.category}</span><br><span><b>Value:</b> ${d.data.value}</span>`)
                         .style("left", d3.event.pageX + margin.left + "px")
                         .style("top", d3.event.pageY + "px")
                         .attr("data-value", d.data.value)
@@ -248,7 +240,6 @@ d3.json(urls[0]).then(kickRsp => {
                 .attr("y", (sizeRectLegend + margin.bottom) / 2)
                 .style("font", font)
                 .text(d => d.name);
-
         })
 
     })
