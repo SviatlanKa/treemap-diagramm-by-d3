@@ -84,23 +84,18 @@ d3.json(BASE_URL + URLS[0]).then(kickRsp => {
                         .text(d.title);
                     main.select("#description")
                         .text(d.description);
-                    svg.remove();
-                    createTreeMap(d);
-                    // updateTreeMap(d);
+                    updateTreeMap(d);
                 });
-
-            let count = 0;
 
             let svg = d3.select("#main")
                 .append("svg");
 
             function createTreeMap(dataset) {
 
-                if (!svg) {
+                if (!document.getElementsByTagName("svg").length) {
                     svg = d3.select("#main")
                         .append("svg");
                 }
-                count++;
 
                 const colorScale = d3.scaleOrdinal(myColor);
                 const font = "15px 'Roboto', sans-serif";
@@ -255,14 +250,12 @@ d3.json(BASE_URL + URLS[0]).then(kickRsp => {
                     .text(d => d.name);
             }
 
-            // function updateTreeMap(dataset) {
-            //     svg.remove();
-            //     createTreeMap(dataset);
-            // }
+            function updateTreeMap(dataset) {
+                svg.remove();
+                createTreeMap(dataset);
+            }
 
             createTreeMap(dataset[0]);
-
-            console.log(count)
         })
     })
 });
